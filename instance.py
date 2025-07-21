@@ -1,13 +1,14 @@
 import discord
-from database import User
+from database import Database, User
 from help import HELP_MESSAGE
 
 class Instance:
-    def __init__(self, message: discord.Message, user: User, webhook: discord.Webhook):
+    def __init__(self, message: discord.Message, user: User, webhook: discord.Webhook, db: Database):
         self.message = message
         self.user = user
         self.thread = message.channel
         self.webhook = webhook
+        self.db = db
     
     async def handle_message(self):
         if self.message.content.startswith(';'):
@@ -87,14 +88,15 @@ class Instance:
 
     async def webhook_send(self, message):
         if self.user.profile is None:
-            await self.webhook.send(message, username = 'Rz Fake')
-            return
-        
-        await self.webhook.send(
-            message,
-            username = self.user.profile.username,
-            avatar_url = self.user.profile.avatar
-            )
+            msg = await self.webhook.send(message, username = 'Rz Fake', wait = True)
+        else:
+            msg = await self.webhook.send(
+                message,
+                username = self.user.profile.username,
+                avatar_url = self.user.profile.avatar,
+                wait = True
+                )
+        self.db.log_message(self.message.id, msg.id)
     
     async def webhook_preview(self, message):
         if self.user.profile is None:

@@ -4,6 +4,7 @@ class Database:
         self.usernames = {}
         self.avatars = {}
         self.prompt_threads = {}
+        self.message_log = {}
     
     def get_profile(self, key):
         return Profile(key, self)
@@ -17,6 +18,12 @@ class Database:
         else:
             self.prompt_threads[thread_id] = 1
             return False
+    
+    def log_message(self, prompt_message_id, webhook_message_id):
+        self.message_log[prompt_message_id] = webhook_message_id
+    
+    def get_webhook_message_id(self, prompt_message_id):
+        return self.message_log.get(prompt_message_id)
     
 class Profile:
     def __init__(self, profile_key: str, database: Database):
@@ -52,7 +59,7 @@ class User:
     
     @profile.setter
     def profile(self, profile: Profile):
-        self.database.profiles[self.id] = profile.key
+        self.database.profiles[self.id] = profile.key if profile else None
     
     def set_profile(self, profile_key: str):
         self.database.profiles[self.id] = profile_key.lower()

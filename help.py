@@ -17,3 +17,4 @@ Use `;preview` to preview what messages will look like.
 Any message that is not a command will be sent to the main channel as the profile you are currently under. When you edit or delete these messages, the corresponding message in the main channel will also be edited or deleted.
 
 Use `;help` to see this message again.'''
+WELCOME_MESSAGE = '''To get started, type `>[profile name]` to choose a profile to post under. Type `;help` for more intstructions.'''

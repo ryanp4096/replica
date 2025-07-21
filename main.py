@@ -1,4 +1,5 @@
 import os
+from typing import override
 import discord
 from dotenv import load_dotenv
 from database import Database
@@ -16,6 +17,7 @@ class MyClient(discord.Client):
     async def on_message(self, message: discord.Message):
         if message.author.bot: return
         if message.author.id == self.user.id: return
+        if message.type != discord.MessageType.default: return
         if message.channel.type != discord.ChannelType.private_thread:
             if message.content == ';help':
                 await message.channel.send(HELP_MESSAGE)
@@ -24,54 +26,35 @@ class MyClient(discord.Client):
         
         user = self.db.get_user(message.author.id)
         webhook = await self.get_bot_webhook(message.channel.parent)
-        instance = Instance(message, user, webhook)
+        instance = Instance(message, user, webhook, self.db)
         await instance.handle_message()
 
 
-        # if message.content.startswith(';'):
-        #     if message.content.startswith(';help'):
-        #         await message.channel.send('Hello World!')
+    async def on_raw_message_edit(self, payload: discord.RawMessageUpdateEvent):
+        id = self.db.get_webhook_message_id(payload.message_id)
+        if id is None: return
+        channel = self.get_channel(payload.channel_id).parent
+        webhook = await self.get_bot_webhook(channel)
+        # message = channel.get_partial_message(id)
+        # await message.edit(content = payload.message.content)
+        content = payload.message.content
+        if content.startswith('>'): content = content.split(' ', 1)[1]
+        await webhook.edit_message(id, content = content)
 
-        #     elif message.content.startswith(';avatar'):
-        #         if message.attachments:
-        #             avatar = message.attachments[0].url
-        #         profile.avatar = avatar
-        #         await message.channel.send('Changed avatar')
-            
-        #     elif message.content.startswith(';username'):
-        #         username = message.content[10:]
-        #         profile.username = username
-        #         await message.channel.send(f'Changed username to {username}')
-            
-        #     elif message.content.startswith(';preview'):
-        #         await webhook.send('Preview',
-        #                      username = profile.username,
-        #                      avatar_url = profile.avatar,
-        #                      thread = message.channel
-        #                      )
-            
-        #     else:
-        #         await message.channel.send('Unknown Command')
-
-        #     return
-        
-        # if message.content.startswith('>'):
-        #     new_profile = message.content[1:]
-        #     user.set_profile(new_profile)
-        #     await message.channel.send(f'Changed profile to {profile}')
-        #     return
-            
-            
-        # await webhook.send(message.content,
-        #                 username = profile.username,
-        #                 avatar_url = profile.avatar
-        #                 )
-
+    async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent):
+        id = self.db.get_webhook_message_id(payload.message_id)
+        if id is None: return
+        channel = self.get_channel(payload.channel_id).parent
+        webhook = await self.get_bot_webhook(channel)
+        # message = channel.get_partial_message(id)
+        # await message.delete()
+        await webhook.delete_message(id)
 
     async def on_thread_join(self, thread: discord.Thread):
         if thread.type != discord.ChannelType.private_thread: return
         await thread.send(HELP_MESSAGE)
     
+
     async def get_bot_webhook(self, channel: discord.TextChannel):
         if channel.id in self.bot_webhook_cache:
             return self.bot_webhook_cache[channel.id]
