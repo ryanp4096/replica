@@ -1,20 +1,22 @@
-HELP_MESSAGE = '''**Welcome to Rz Fake**
-To use Rz Fake, create a private thread in the channel you want to post to and add the Rz Fake bot. Rz Fake will not activate outside of private threads.
+HELP_MESSAGE = '''**__Welcome to Rz Fake__**
 
-To switch to a character, use:
-`>[profile name]`
-The profile name is a shorthand for the character with no spaces, such as `squeak` or `az`. To see what profiles are available, use `;profiles`. Profiles and associated data are shared between all users.
+**Setup**
+- Type `;thread` to create a thread for Rz Fake in the channel you want to post to
+- OR create a private thread and add Rz Fake
 
-You can also post just one message as a profile without switching using:
-`>[profile name] [message]`
+**Profiles**
+- Choose who you want to post as using `>[profile]`
+- Type `;profiles` to view available profiles
+- Post just one message as a profile using `>[profile] [message]`
 
-To change the profile's username and avatar, use:
-`;username [username]`
-`;avatar` and add attachment
-`;avatar [url]`
-Use `;preview` to preview what messages will look like.
+**Profile Details**
+- Change the current profile's display name using `;username [username]`
+- Change the current profile's avatar using `;avatar` and attaching a file, or `;avatar [url]`
+- Type `;preview` to preview the current profile details
+- Profile data is shared for all users
 
-Any message that is not a command will be sent to the main channel as the profile you are currently under. When you edit or delete these messages, the corresponding message in the main channel will also be edited or deleted.
+**Sending**
+- Non-command messages will be sent to the main channel as your current profile
+- When you edit/delete these messages, the corresponding message in the main channel will update accordingly
 
-Use `;help` to see this message again.'''
-WELCOME_MESSAGE = '''To get started, type `>[profile name]` to choose a profile to post under. Type `;help` for more intstructions.'''
+Type `;help` to see this message again'''
