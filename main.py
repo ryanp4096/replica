@@ -1,72 +1,76 @@
 import os
 import discord
 from dotenv import load_dotenv
+from database import Database
+from instance import Instance
+from help import HELP_MESSAGE
 
 load_dotenv()
 
 class MyClient(discord.Client):
     async def on_ready(self):
+        self.db = Database()
         self.bot_webhook_cache = {}
-        self.saved_threads = set()
-        self.user_profiles = {}
-        self.profile_usernames = {}
-        self.profile_avatars = {}
         print(f'logged in as {self.user}')
 
     async def on_message(self, message: discord.Message):
         if message.author.bot: return
         if message.author.id == self.user.id: return
-        if message.channel.type != discord.ChannelType.private_thread: return
-        if message.channel.id not in self.saved_threads:
-            self.saved_threads.add(message.channel.id)
+        if message.channel.type != discord.ChannelType.private_thread:
+            if message.content == ';help':
+                await message.channel.send(HELP_MESSAGE)
             return
+        if not self.db.check_thread(message.channel.id) and not (message.content.startswith(';') or message.content.startswith('>')): return
         
-        profile = self.user_profiles.get(message.author.id, '')
+        user = self.db.get_user(message.author.id)
         webhook = await self.get_bot_webhook(message.channel.parent)
+        instance = Instance(message, user, webhook)
+        await instance.handle_message()
 
-        if message.content.startswith(';'):
-            if message.content.startswith(';help'):
-                await message.channel.send('Hello World!')
 
-            elif message.content.startswith(';avatar'):
-                if message.attachments:
-                    avatar = message.attachments[0].url
-                self.profile_avatars[profile] = avatar
-                await message.channel.send('Changed avatar')
-            
-            elif message.content.startswith(';username'):
-                username = message.content[10:]
-                self.profile_usernames[profile] = username
-                await message.channel.send(f'Changed username to {username}')
-            
-            elif message.content.startswith(';preview'):
-                await webhook.send('Preview',
-                             username = self.profile_usernames.get(profile, profile),
-                             avatar_url = self.profile_avatars.get(profile),
-                             thread = message.channel
-                             )
-            
-            else:
-                await message.channel.send('Unknown Command')
+        # if message.content.startswith(';'):
+        #     if message.content.startswith(';help'):
+        #         await message.channel.send('Hello World!')
 
-            return
+        #     elif message.content.startswith(';avatar'):
+        #         if message.attachments:
+        #             avatar = message.attachments[0].url
+        #         profile.avatar = avatar
+        #         await message.channel.send('Changed avatar')
+            
+        #     elif message.content.startswith(';username'):
+        #         username = message.content[10:]
+        #         profile.username = username
+        #         await message.channel.send(f'Changed username to {username}')
+            
+        #     elif message.content.startswith(';preview'):
+        #         await webhook.send('Preview',
+        #                      username = profile.username,
+        #                      avatar_url = profile.avatar,
+        #                      thread = message.channel
+        #                      )
+            
+        #     else:
+        #         await message.channel.send('Unknown Command')
+
+        #     return
         
-        if message.content.startswith('>'):
-            profile = message.content[1:]
-            self.user_profiles[message.author.id] = profile
-            await message.channel.send(f'Changed profile to {profile}')
-            return
+        # if message.content.startswith('>'):
+        #     new_profile = message.content[1:]
+        #     user.set_profile(new_profile)
+        #     await message.channel.send(f'Changed profile to {profile}')
+        #     return
             
             
-        await webhook.send(message.content,
-                        username = self.profile_usernames.get(profile, profile),
-                        avatar_url = self.profile_avatars.get(profile)
-                        )
+        # await webhook.send(message.content,
+        #                 username = profile.username,
+        #                 avatar_url = profile.avatar
+        #                 )
 
 
     async def on_thread_join(self, thread: discord.Thread):
         if thread.type != discord.ChannelType.private_thread: return
-        await thread.send("Hello World!")
+        await thread.send(HELP_MESSAGE)
     
     async def get_bot_webhook(self, channel: discord.TextChannel):
         if channel.id in self.bot_webhook_cache:
