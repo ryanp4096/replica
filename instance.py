@@ -1,5 +1,5 @@
 import discord
-from database import Database, Prompt
+from database import Database, Prompt, Profile
 from help import HELP_MESSAGE
 
 class Instance:
@@ -16,7 +16,7 @@ class Instance:
         elif self.message.content.startswith('>'):
             await self.handle_profile_command()
         else:
-            if self.prompt.profile:
+            if self.prompt.get_profile():
                 await self.webhook_send(self.message.content)
                 await self.message.add_reaction('✅')
             else:
@@ -63,41 +63,44 @@ class Instance:
         if ' ' in command:
             profile_key, message = command.split(' ', 1)
             profile_key = profile_key.lower()
-            old_profile = self.prompt.profile
-            self.prompt.profile_key = profile_key
-            await self.webhook_send(message)
-            self.prompt.profile = old_profile
-            await self.message.add_reaction('✅')
+            await self.command_temp_profile(profile_key, message)
         else:
             await self.command_profile(command)
 
 
     async def command_avatar(self, url):
-        if self.prompt.profile is None:
+        profile = self.prompt.get_profile()
+        if profile is None:
             await self.thread.send('Switch to a profile using `>[profile]` before setting avatar')
             return
-        self.prompt.profile.avatar = url
+        profile.avatar = url
         await self.webhook_preview('Changed avatar')
 
     async def command_username(self, username):
-        if self.prompt.profile is None:
+        profile = self.prompt.get_profile()
+        if profile is None:
             await self.thread.send('Switch to a profile using `>[profile]` before setting username')
             return
-        self.prompt.profile.username = username
+        profile.username = username
         await self.webhook_preview(f'Changed username to {username}')
 
     async def command_preview(self, message):
-        await self.webhook_preview(message if message else f'Profile: {self.prompt.profile_key}')
+        await self.webhook_preview(message if message else f'Profile: {self.prompt.get_profile().key}')
     
     async def command_profile(self, profile_key: str):
-        self.prompt.profile_key = profile_key.lower()
-        await self.webhook_preview(f'Changed profile to {self.prompt.profile.key}')
+        profile_key = profile_key.lower()
+        self.prompt.set_profile(profile_key)
+        await self.webhook_preview(f'Changed profile to {profile_key}')
+
+    async def command_temp_profile(self, profile_key, message):
+            await self.webhook_send(message, alias = self.db.get_profile(profile_key))
+            await self.message.add_reaction('✅')
 
     async def command_profiles(self):
         await self.thread.send(f'Profiles: {self.db.list_profiles()}')
 
-    async def webhook_send(self, message):
-        profile = self.prompt.profile
+    async def webhook_send(self, message, alias: Profile = None):
+        profile = self.prompt.get_profile() if alias is None else alias
         username = profile.username if profile else 'Rz Fake'
         avatar_url = profile.avatar if profile else None
         msg = await self.webhook.send(
@@ -109,7 +112,7 @@ class Instance:
         self.db.log_message(self.message.id, msg.id)
     
     async def webhook_preview(self, message):
-        profile = self.prompt.profile
+        profile = self.prompt.get_profile()
         username = profile.username if profile else 'Rz Fake'
         avatar_url = profile.avatar if profile else None
 

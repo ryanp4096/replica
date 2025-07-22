@@ -80,4 +80,4 @@ class MyClient(discord.Client):
 client = MyClient(intents=discord.Intents(
     guilds=True, webhooks=True, messages=True, message_content=True
 ))
-client.run(os.getenv('TOKEN'))
+client.run(os.getenv('DISCORD_TOKEN'))
