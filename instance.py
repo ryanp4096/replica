@@ -105,6 +105,7 @@ class Instance:
             username, avatar_url = profile.get_details()
         else:
             username, avatar_url = 'Rz Fake', None
+        if avatar_url is None: avatar_url = 'https://discord.com/assets/18e336a74a159cfd.png'
         msg = await self.webhook.send(
             message,
             username = username,
@@ -119,6 +120,7 @@ class Instance:
             username, avatar_url = profile.get_details()
         else:
             username, avatar_url = 'Rz Fake', None
+        if avatar_url is None: avatar_url = 'https://discord.com/assets/18e336a74a159cfd.png'
 
         await self.webhook.send(
             message,
