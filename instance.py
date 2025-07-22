@@ -73,7 +73,7 @@ class Instance:
         if profile is None:
             await self.thread.send('Switch to a profile using `>[profile]` before setting avatar')
             return
-        profile.avatar = url
+        profile.set_avatar(url)
         await self.webhook_preview('Changed avatar')
 
     async def command_username(self, username):
@@ -81,7 +81,7 @@ class Instance:
         if profile is None:
             await self.thread.send('Switch to a profile using `>[profile]` before setting username')
             return
-        profile.username = username
+        profile.set_username(username)
         await self.webhook_preview(f'Changed username to {username}')
 
     async def command_preview(self, message):
@@ -93,16 +93,18 @@ class Instance:
         await self.webhook_preview(f'Changed profile to {profile_key}')
 
     async def command_temp_profile(self, profile_key, message):
-            await self.webhook_send(message, alias = self.db.get_profile(profile_key))
-            await self.message.add_reaction('✅')
+        await self.webhook_send(message, alias = self.db.get_profile(profile_key))
+        await self.message.add_reaction('✅')
 
     async def command_profiles(self):
         await self.thread.send(f'Profiles: {self.db.list_profiles()}')
 
-    async def webhook_send(self, message, alias: Profile = None):
+    async def webhook_send(self, message: str, alias: Profile = None):
         profile = self.prompt.get_profile() if alias is None else alias
-        username = profile.username if profile else 'Rz Fake'
-        avatar_url = profile.avatar if profile else None
+        if profile:
+            username, avatar_url = profile.get_details()
+        else:
+            username, avatar_url = 'Rz Fake', None
         msg = await self.webhook.send(
             message,
             username = username,
@@ -113,8 +115,10 @@ class Instance:
     
     async def webhook_preview(self, message):
         profile = self.prompt.get_profile()
-        username = profile.username if profile else 'Rz Fake'
-        avatar_url = profile.avatar if profile else None
+        if profile:
+            username, avatar_url = profile.get_details()
+        else:
+            username, avatar_url = 'Rz Fake', None
 
         await self.webhook.send(
             message,

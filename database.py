@@ -14,7 +14,7 @@ class Database:
     
     def get_profile(self, key):
         if key is None: return
-        return Profile(key, self)
+        return Profile(key, self.db, self)
     
     def get_prompt(self, id):
         response = (
@@ -50,29 +50,63 @@ class Database:
         # return self.message_log.get(prompt_message_id)
 
     def list_profiles(self):
-        items = sorted(set(self.usernames) | set(self.avatars))
+        response = (
+            self.db.table('Profile')
+            .select('key')
+            .execute()
+        )
+        items = sorted(item['key'] for item in response.data)
         return ' '.join(items)
     
 class Profile:
-    def __init__(self, profile_key: str, database: Database):
+    def __init__(self, profile_key: str, db: Client, database: Database):
         self.key = profile_key.lower()
+        self.db = db
         self.database = database
     
-    @property
-    def username(self):
-        return self.database.usernames.get(self.key, self.key)
+    def get_details(self) -> tuple[str | None, str | None]:
+        response = (
+            self.db.table('Profile')
+            .select('username, avatar')
+            .eq('key', self.key)
+            .execute()
+        )
+        if response.data:
+            username = response.data[0]['username']
+            avatar = response.data[0]['avatar']
+            return username if username else self.key, avatar
+        else:
+            return self.key, None
+
+    def set_username(self, username):
+        response = (
+            self.db.table('Profile')
+            .upsert({'key': self.key, 'username': username})
+            .execute()
+        )
     
-    @username.setter
-    def username(self, value):
-        self.database.usernames[self.key] = value
+    def set_avatar(self, avatar):
+        response = (
+            self.db.table('Profile')
+            .upsert({'key': self.key, 'avatar': avatar})
+            .execute()
+        )
+
+    # @property
+    # def username(self):
+    #     return self.database.usernames.get(self.key, self.key)
     
-    @property
-    def avatar(self):
-        return self.database.avatars.get(self.key)
+    # @username.setter
+    # def username(self, value):
+    #     self.database.usernames[self.key] = value
     
-    @avatar.setter
-    def avatar(self, value):
-        self.database.avatars[self.key] = value
+    # @property
+    # def avatar(self):
+    #     return self.database.avatars.get(self.key)
+    
+    # @avatar.setter
+    # def avatar(self, value):
+    #     self.database.avatars[self.key] = value
 
 class Prompt:
     def __init__(self, id, db: Client, database: Database):
