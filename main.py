@@ -1,5 +1,4 @@
 import os
-from typing import override
 import discord
 from dotenv import load_dotenv
 from database import DataManager
@@ -77,7 +76,11 @@ class MyClient(discord.Client):
         return webhook
 
 
-client = MyClient(intents=discord.Intents(
-    guilds=True, webhooks=True, messages=True, message_content=True
-))
-client.run(os.getenv('DISCORD_TOKEN'))
+def start_bot():
+    client = MyClient(intents=discord.Intents(
+        guilds=True, webhooks=True, messages=True, message_content=True
+    ))
+    client.run(os.getenv('DISCORD_TOKEN'))
+
+if __name__ == '__main__':
+    start_bot()
