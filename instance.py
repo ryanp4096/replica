@@ -1,14 +1,14 @@
 import discord
-from database import Database, Prompt, Profile
+from database import DataManager, Prompt, Profile
 from help import HELP_MESSAGE
 
 class Instance:
-    def __init__(self, message: discord.Message, prompt: Prompt, webhook: discord.Webhook, db: Database):
+    def __init__(self, message: discord.Message, prompt: Prompt, webhook: discord.Webhook, dm: DataManager):
         self.message = message
         self.prompt = prompt
         self.thread = message.channel
         self.webhook = webhook
-        self.db = db
+        self.dm = dm
     
     async def handle_message(self):
         if self.message.content.startswith(';'):
@@ -93,11 +93,11 @@ class Instance:
         await self.webhook_preview(f'Changed profile to {profile_key}')
 
     async def command_temp_profile(self, profile_key, message):
-        await self.webhook_send(message, alias = self.db.get_profile(profile_key))
+        await self.webhook_send(message, alias = self.dm.get_profile(profile_key))
         await self.message.add_reaction('✅')
 
     async def command_profiles(self):
-        await self.thread.send(f'Profiles: {self.db.list_profiles()}')
+        await self.thread.send(f'Profiles: {self.dm.list_profiles()}')
 
     async def webhook_send(self, message: str, alias: Profile = None):
         profile = self.prompt.get_profile() if alias is None else alias
@@ -112,7 +112,7 @@ class Instance:
             avatar_url = avatar_url,
             wait = True
             )
-        self.db.log_message(self.message.id, msg.id)
+        self.dm.log_message(self.message.id, msg.id)
     
     async def webhook_preview(self, message):
         profile = self.prompt.get_profile()
