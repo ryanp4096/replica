@@ -8,6 +8,9 @@ from help import HELP_MESSAGE
 load_dotenv()
 
 class MyClient(discord.Client):
+    def start_bot(self):
+        self.run(os.getenv('DISCORD_TOKEN'))
+
     async def on_ready(self):
         self.dm = DataManager()
         self.bot_webhook_cache = {}
@@ -76,11 +79,16 @@ class MyClient(discord.Client):
         return webhook
 
 
-def start_bot():
-    client = MyClient(intents=discord.Intents(
+def create_client():
+    return MyClient(intents=discord.Intents(
         guilds=True, webhooks=True, messages=True, message_content=True
     ))
-    client.run(os.getenv('DISCORD_TOKEN'))
+
+# def start_bot():
+#     client = MyClient(intents=discord.Intents(
+#         guilds=True, webhooks=True, messages=True, message_content=True
+#     ))
+#     client.run(os.getenv('DISCORD_TOKEN'))
 
 if __name__ == '__main__':
-    start_bot()
+    create_client().start_bot()
