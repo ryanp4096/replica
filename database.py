@@ -13,6 +13,13 @@ class DataManager:
         self.prompt_cache = {}
         self.message_cache = {}
 
+    def check_cache(self):
+        if len(self.message_cache) > 1000:
+            for key in list(self.message_cache):
+                del self.message_cache[key]
+                if len(self.message_cache) <= 750:
+                    return
+
     def get_profile(self, key):
         if key is None: return
         return Profile(key, self.db, self)
@@ -46,6 +53,7 @@ class DataManager:
             .execute()
         )
         self.message_cache[prompt_message_id] = {'webhook_message_id': webhook_message_id}
+        self.check_cache()
     
     def get_webhook_message_id(self, prompt_message_id):
         if prompt_message_id in self.message_cache:
@@ -59,6 +67,7 @@ class DataManager:
         if not response.data: return
         webhook_message_id = response.data[0]['webhook_message_id']
         self.message_cache[prompt_message_id] = {'webhook_message_id': webhook_message_id}
+        self.check_cache()
         return webhook_message_id
 
     def list_profiles(self):
