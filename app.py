@@ -23,5 +23,5 @@ def create_app():
         thread_manager.start()
         return '<p>Running...</p>'
     
-    thread_manager.start()
+    # thread_manager.start()
     return app
