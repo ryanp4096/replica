@@ -4,11 +4,15 @@ from dotenv import load_dotenv
 from database import DataManager
 from instance import Instance
 from help import HELP_MESSAGE
+from util import convert_attachments
 
 load_dotenv()
+ADMIN_ID = int(os.getenv('ADMIN_ID')) if os.getenv('ADMIN_ID') else None
 
 class MyClient(discord.Client):
-    def start_bot(self):
+    def start_bot(self, dev_mode=False):
+        self.dev_mode = dev_mode
+        self.paused = False
         self.run(os.getenv('DISCORD_TOKEN'))
 
     async def on_ready(self):
@@ -17,6 +21,19 @@ class MyClient(discord.Client):
         print(f'logged in as {self.user}')
 
     async def on_message(self, message: discord.Message):
+        if message.author.id == ADMIN_ID and message.type == discord.MessageType.default:
+            if message.content == ';pause':
+                self.paused = True
+                print('paused')
+                await message.channel.send('paused')
+                return
+            elif message.content == ';resume':
+                self.paused = False
+                print('resumed')
+                await message.channel.send('resumed')
+                return
+        
+        if self.paused: return
         if message.author.bot: return
         if message.author.id == self.user.id: return
         if message.type not in (discord.MessageType.default, discord.MessageType.reply, discord.MessageType.thread_starter_message): return
@@ -43,6 +60,7 @@ class MyClient(discord.Client):
 
 
     async def on_raw_message_edit(self, payload: discord.RawMessageUpdateEvent):
+        if self.paused: return
         id = self.dm.get_webhook_message_id(payload.message_id)
         if id is None: return
 
@@ -51,11 +69,13 @@ class MyClient(discord.Client):
 
         content = payload.message.content
         if content.startswith('>'): content = content.split(' ', 1)[1]
+        content += convert_attachments(payload.message.attachments)
 
         await webhook.edit_message(id, content = content)
 
 
     async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent):
+        if self.paused: return
         id = self.dm.get_webhook_message_id(payload.message_id)
         if id is None: return
 
@@ -91,4 +111,4 @@ def create_client():
 #     client.run(os.getenv('DISCORD_TOKEN'))
 
 if __name__ == '__main__':
-    create_client().start_bot()
+    create_client().start_bot(dev_mode=True)

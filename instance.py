@@ -1,6 +1,7 @@
 import discord
 from database import DataManager, Prompt, Profile
 from help import HELP_MESSAGE
+from util import convert_attachments
 
 class Instance:
     def __init__(self, message: discord.Message, prompt: Prompt, webhook: discord.Webhook, dm: DataManager):
@@ -17,7 +18,7 @@ class Instance:
             await self.handle_profile_command()
         else:
             if self.prompt.get_profile():
-                await self.webhook_send(self.message.content)
+                await self.webhook_send(self.message.content + convert_attachments(self.message.attachments))
                 await self.message.add_reaction('✅')
             else:
                 await self.thread.send('Switch to a profile using `>[profile]` before sending messages')
@@ -60,11 +61,13 @@ class Instance:
             await self.thread.send('Unknown command. Use ;help for instructions')
             return
         
-        if ' ' in command:
+        if ' ' in command: # send message temporarily as a profile
             profile_key, message = command.split(' ', 1)
             profile_key = profile_key.lower()
             await self.command_temp_profile(profile_key, message)
-        else:
+        elif self.message.attachments: # send just attachments temporarily as a profile
+            await self.command_temp_profile(command, '')
+        else: # switch profile
             await self.command_profile(command)
 
 
@@ -85,6 +88,8 @@ class Instance:
         await self.webhook_preview(f'Changed username to {username}')
 
     async def command_preview(self, message):
+        if message is None: message = ''
+        message += convert_attachments(self.message.attachments)
         await self.webhook_preview(message if message else f'Profile: {self.prompt.get_profile().key}')
     
     async def command_profile(self, profile_key: str):
@@ -93,6 +98,7 @@ class Instance:
         await self.webhook_preview(f'Changed profile to {profile_key}')
 
     async def command_temp_profile(self, profile_key, message):
+        message += convert_attachments(self.message.attachments)
         await self.webhook_send(message, alias = self.dm.get_profile(profile_key))
         await self.message.add_reaction('✅')
 
