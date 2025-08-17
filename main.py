@@ -13,11 +13,11 @@ class MyClient(discord.Client):
     def start_bot(self, dev_mode=False):
         self.dev_mode = dev_mode
         self.paused = False
+        self.bot_webhook_cache = {}
+        self.dm = DataManager()
         self.run(os.getenv('DISCORD_TOKEN'))
 
     async def on_ready(self):
-        self.dm = DataManager()
-        self.bot_webhook_cache = {}
         print(f'logged in as {self.user}')
 
     async def on_message(self, message: discord.Message):
@@ -97,6 +97,9 @@ class MyClient(discord.Client):
         
         self.bot_webhook_cache[channel.id] = webhook
         return webhook
+    
+    def ping(self):
+        self.dm.ping()
 
 
 def create_client():

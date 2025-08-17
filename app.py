@@ -15,6 +15,7 @@ class ThreadManager:
             print('starting thread')
         else:
             print('thread already started')
+            self.client.ping()
 
 def create_app():
     app = Flask(__name__)

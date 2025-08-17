@@ -1,11 +1,13 @@
 import os
 from supabase import create_client, Client
+from datetime import datetime, timedelta
 
 class DataManager:
     def __init__(self):
         url: str = os.getenv("SUPABASE_URL")
         key: str = os.getenv("SUPABASE_KEY")
         self.db: Client = create_client(url, key)
+        self.last_ping = None
         self.reset_cache()
     
     def reset_cache(self):
@@ -78,6 +80,17 @@ class DataManager:
         )
         items = sorted(item['key'] for item in response.data)
         return ' '.join(items)
+
+    def ping(self):
+        now = datetime.now()
+        if self.last_ping is None or now - self.last_ping > timedelta(days=1):
+            self.last_ping = now
+            (
+                self.db.table('Profile')  # run query to keep alive
+                .select('key')
+                .execute()
+            )
+            print('pinged database')
     
 
 class Profile:
