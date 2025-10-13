@@ -83,7 +83,7 @@ class DataManager:
 
     def ping(self):
         now = datetime.now()
-        if self.last_ping is None or now - self.last_ping > timedelta(days=1):
+        if self.last_ping is None or now - self.last_ping > timedelta(hours=1):
             self.last_ping = now
             (
                 self.db.table('Profile')  # run query to keep alive

@@ -99,7 +99,10 @@ class MyClient(discord.Client):
         return webhook
     
     def ping(self):
-        self.dm.ping()
+        try:
+            self.dm.ping()
+        except AttributeError:
+            pass
 
 
 def create_client():
